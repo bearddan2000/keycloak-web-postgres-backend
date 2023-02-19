@@ -1,0 +1,39 @@
+version: '3.4'
+services:
+  db:
+    image: postgres:alpine
+    healthcheck:
+      test: "exit 0"
+    environment:
+      - POSTGRES_DB=db_app
+      - POSTGRES_USER=maria
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+  keycloak:
+    image: jboss/keycloak:latest
+    hostname: keycloak
+    command:
+      - " -b 0.0.0.0"
+    container_name: "keycloak"
+    healthcheck:
+      test: "exit 0"
+    volumes:
+      - ./keycloak/imports:/opt/jboss/keycloak/imports
+      - ./keycloak/exports:/opt/jboss/keycloak/exports
+    environment:
+      KEYCLOAK_IMPORT: /opt/jboss/keycloak/imports/demo-realm.json -Dkeycloak.profile.feature.upload_scripts=enabled
+      PROXY_ADDRESS_FORWARDING: "true"
+      DB_VENDOR: POSTGRES
+      DB_ADDR: db
+      DB_PORT: 5432
+      DB_DATABASE: db_app
+      DB_USER: maria
+      DB_PASSWORD: pass
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: pass
+    ports:
+      - 80:8080
+    links:
+      - "db:db"
+    depends_on:
+      - db
